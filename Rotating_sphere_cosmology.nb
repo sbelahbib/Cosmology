@@ -1,0 +1,44 @@
+(* Constants and grid setup *)
+gridSize = 100;
+duration = 100;
+waveSpeed = 1;
+rotationSpeed = 0.1;
+
+(* Create a 2D grid *)
+{x, y} = Transpose[Table[{i, j}, {i, -50, 50, 100/gridSize}, {j, -50, 50, 100/gridSize}], {3, 2, 1}];
+
+(* Initialize wave matrix and sphere position *)
+waveMatrix = ConstantArray[0, {gridSize + 1, gridSize + 1}];
+spherePosition = -25;
+
+(* Function to update wave and calculate contours *)
+updateWave[frameNum_, spherePos_] := Module[
+  {rotationEffect, distance, waveAmplitude, contours},
+  spherePosition = spherePos + waveSpeed;
+  rotationEffect = rotationSpeed * frameNum;
+  
+  (* Calculate wave pattern *)
+  distance = Sqrt[(x - spherePosition)^2 + y^2];
+  waveAmplitude = Exp[-0.05 * (distance - 10 * Sin[Pi * frameNum / duration])] * Cos[0.2 * distance + rotationEffect];
+  
+  (* Accumulate waves *)
+  waveMatrix = waveMatrix + waveAmplitude;
+  
+  (* Generate contours *)
+  contours = ListContourPlot[waveMatrix, Contours -> 10, ContourShading -> None, ContourStyle -> Black];
+  
+  (* Combine image and contour plot *)
+  Show[
+    ListDensityPlot[waveMatrix, ColorFunction -> "CoolWarm", PlotLegends -> Automatic],
+    Graphics[{Black, Disk[{spherePosition, 0}, 3]}],
+    contours,
+    PlotRange -> {{-50, 50}, {-50, 50}}, Frame -> True
+  ]
+];
+
+(* Animate the simulation *)
+Animate[
+  updateWave[n, spherePosition],
+  {n, 1, duration, 1},
+  AnimationRepetitions -> 1
+]
